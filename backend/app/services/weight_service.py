@@ -2,7 +2,7 @@ import uuid
 from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 
 from app.models.weight_record import WeightRecord
 from app.schemas.weight import WeightRecordCreate, WeightRecordUpdate
@@ -14,20 +14,6 @@ async def create_weight_record(
     data: WeightRecordCreate,
     db: AsyncSession,
 ) -> WeightRecord:
-    existing = await db.execute(
-        select(WeightRecord).where(
-            and_(
-                WeightRecord.user_id == user_id,
-                WeightRecord.recorded_date == data.recorded_date,
-            )
-        )
-    )
-    if existing.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Weight already recorded for {data.recorded_date}. Use PUT to update.",
-        )
-
     record = WeightRecord(
         user_id=user_id,
         weight_kg=data.weight_kg,

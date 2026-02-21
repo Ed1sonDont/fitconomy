@@ -7,10 +7,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import type { TokenResponse } from "@/types";
+import { ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,14 +37,14 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="w-full max-w-sm shadow-xl">
-      <CardHeader>
-        <CardTitle>登录</CardTitle>
-        <CardDescription>使用你的邮箱和密码登录</CardDescription>
+    <Card className="w-full max-w-sm shadow-lg border-0 shadow-black/5">
+      <CardHeader className="text-center pb-2">
+        <CardTitle className="text-2xl font-bold">欢迎回来</CardTitle>
+        <CardDescription>登录你的 Fitconomy 账号</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label htmlFor="email">邮箱</Label>
             <Input
               id="email"
@@ -53,9 +54,10 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
+              className="h-11"
             />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label htmlFor="password">密码</Label>
             <Input
               id="password"
@@ -65,16 +67,18 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="current-password"
+              className="h-11"
             />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3">
-          <Button type="submit" className="w-full" disabled={loading}>
+        <CardFooter className="flex flex-col gap-4 pt-2">
+          <Button type="submit" className="w-full h-11 rounded-full text-base gap-2" disabled={loading}>
             {loading ? "登录中…" : "登录"}
+            {!loading && <ArrowRight className="h-4 w-4" />}
           </Button>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-sm text-center">
             还没有账号？{" "}
-            <Link href="/register" className="text-emerald-600 font-medium hover:underline">
+            <Link href="/register" className="text-primary font-semibold hover:underline">
               立即注册
             </Link>
           </p>

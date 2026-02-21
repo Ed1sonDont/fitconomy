@@ -30,11 +30,11 @@ const CustomTooltip = ({ active, payload, label }: {
 }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border bg-background p-3 shadow-lg text-sm">
-      <p className="text-muted-foreground mb-1">
+    <div className="border border-border bg-card rounded-xl p-3 shadow-lg text-sm">
+      <p className="text-muted-foreground mb-1 text-xs">
         {label ? format(parseISO(label), "M月d日 (E)", { locale: zhCN }) : ""}
       </p>
-      <p className="font-bold text-lg">{payload[0].value} kg</p>
+      <p className="font-bold text-lg text-chart-5">{payload[0].value} kg</p>
     </div>
   );
 };
@@ -55,25 +55,21 @@ export function WeightChart({ data, goalWeight }: WeightChartProps) {
   return (
     <ResponsiveContainer width="100%" height={180}>
       <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+        <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.90 0.005 260)" />
         <XAxis
           dataKey="date"
           tickLine={false}
           axisLine={false}
-          tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+          tick={{ fontSize: 11, fill: "oklch(0.50 0.02 260)" }}
           tickFormatter={(v) => {
-            try {
-              return format(parseISO(v), "M/d");
-            } catch {
-              return v;
-            }
+            try { return format(parseISO(v), "M/d"); } catch { return v; }
           }}
           interval="preserveStartEnd"
         />
         <YAxis
           tickLine={false}
           axisLine={false}
-          tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+          tick={{ fontSize: 11, fill: "oklch(0.50 0.02 260)" }}
           domain={[Math.floor(minVal - 1), Math.ceil(maxVal + 1)]}
           width={50}
           tickFormatter={(v) => `${v}kg`}
@@ -82,18 +78,18 @@ export function WeightChart({ data, goalWeight }: WeightChartProps) {
         {goalWeight && (
           <ReferenceLine
             y={goalWeight}
-            stroke="#10b981"
+            stroke="oklch(0.65 0.17 160)"
             strokeDasharray="5 5"
-            label={{ value: `目标 ${goalWeight}kg`, fill: "#10b981", fontSize: 11 }}
+            label={{ value: `目标 ${goalWeight}kg`, fill: "oklch(0.65 0.17 160)", fontSize: 11 }}
           />
         )}
         <Line
           type="monotone"
           dataKey="weight_kg"
-          stroke="#6366f1"
-          strokeWidth={2}
-          dot={{ r: 3, fill: "#6366f1", strokeWidth: 0 }}
-          activeDot={{ r: 5 }}
+          stroke="oklch(0.60 0.16 300)"
+          strokeWidth={2.5}
+          dot={{ r: 3, fill: "oklch(0.60 0.16 300)", strokeWidth: 0 }}
+          activeDot={{ r: 5, strokeWidth: 2, stroke: "white" }}
         />
       </LineChart>
     </ResponsiveContainer>

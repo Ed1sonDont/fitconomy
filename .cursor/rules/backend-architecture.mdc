@@ -1,0 +1,142 @@
+---
+description: Fitconomy 后端项目架构规范 — 在编辑后端 Python 代码时自动生效，确保代码风格和分层结构一致
+globs: backend/**/*.py
+alwaysApply: false
+---
+
+# Fitconomy 后端架构规范
+
+## 技术栈（禁止引入未列出的依赖）
+
+- Python 3.12+ / FastAPI 0.115+ / Pydantic 2.10+
+- SQLAlchemy 2.0+（纯异步，asyncpg 驱动）
+- PostgreSQL / Alembic 1.14+（异步迁移）
+- JWT 认证（python-jose + passlib/bcrypt）
+- Redis 缓存（redis[asyncio]）
+- 存储抽象：LocalStorage / S3Storage
+
+## 分层架构（严格遵守，禁止跨层调用）
+
+```
+Router (app/routers/)   → 只做参数接收、依赖注入、调用 Service、返回响应
+Service (app/services/) → 只做业务逻辑、数据库操作、调用其他 Service
+Model (app/models/)     → 只做 ORM 映射，不含业务逻辑
+Schema (app/schemas/)   → 只做请求/响应数据验证
+Core (app/core/)        → 安全、依赖注入、存储等横切关注点
+```
+
+- Router 禁止直接写 SQLAlchemy 查询
+- Model 禁止导入 Service 或 Router
+- Service 之间可互相调用，但禁止循环依赖
+
+## 文件与命名规范
+
+| 层 | 文件位置 | 命名示例 |
+|---|---|---|
+| 模型 | `app/models/weight_record.py` | 类名 `WeightRecord` |
+| Schema | `app/schemas/weight.py` | `WeightRecordCreate` / `WeightRecordUpdate` / `WeightRecordOut` |
+| 路由 | `app/routers/weight.py` | 函数 `create_weight_record` |
+| 服务 | `app/services/weight_service.py` | 函数 `create_weight_record()` |
+
+- 文件名：snake_case
+- 类名：PascalCase
+- 函数/变量：snake_case
+- 常量：UPPER_SNAKE_CASE
+
+## Model 编写规范
+
+```python
+from app.database import Base
+
+class ExampleRecord(Base):
+    __tablename__ = "example_records"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
+
+    user: Mapped["User"] = relationship(back_populates="example_records")
+```
+
+- 主键统一使用 UUID
+- 必须包含 `created_at` / `updated_at`
+- 外键关系使用 `relationship` + `back_populates`，父表侧加 `cascade="all, delete-orphan"`
+
+## Schema 编写规范
+
+```python
+class ExampleCreate(BaseModel):
+    value: float = Field(gt=0, lt=999)
+
+class ExampleOut(BaseModel):
+    id: uuid.UUID
+    value: float
+    created_at: datetime
+    model_config = {"from_attributes": True}
+```
+
+- 输入 Schema：用 `Field()` 约束（min_length / max_length / gt / lt）
+- 输出 Schema：必须设置 `model_config = {"from_attributes": True}`
+- 可选字段使用 `float | None = None`（不用 `Optional`）
+
+## Router 编写规范
+
+```python
+router = APIRouter()
+
+@router.post("/", response_model=ExampleOut, status_code=201)
+async def create_example(
+    data: ExampleCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return await example_service.create_example(db, current_user.id, data)
+```
+
+- 所有需要认证的端点注入 `Depends(get_current_user)`
+- 数据库会话通过 `Depends(get_db)` 注入
+- 创建操作返回 `status_code=201`
+- 指定 `response_model` 控制输出
+
+## Service 编写规范
+
+```python
+async def create_example(db: AsyncSession, user_id: uuid.UUID, data: ExampleCreate) -> ExampleRecord:
+    record = ExampleRecord(user_id=user_id, **data.model_dump())
+    db.add(record)
+    await db.flush()
+    await db.commit()
+    await db.refresh(record)
+    return record
+```
+
+- 所有函数必须 `async def`
+- 参数顺序：`db` → `user_id` → 业务参数
+- 查询用 `await db.execute(select(...))`，结果用 `.scalars().all()` 或 `.scalar_one_or_none()`
+- 写操作：`db.add()` → `flush()` → `commit()` → `refresh()`
+- 权限校验 + 404 检查在 Service 层用 `HTTPException` 抛出
+
+## 导入顺序
+
+1. 标准库（`uuid`, `datetime` 等）
+2. 第三方库（`fastapi`, `sqlalchemy`, `pydantic`）
+3. 项目内部（`from app.models.xxx import Xxx`）
+
+使用绝对导入：`from app.xxx import yyy`，禁止相对导入。
+
+## 数据库迁移
+
+- 新增/修改 Model 后必须生成 Alembic 迁移脚本
+- 迁移脚本位于 `app/migrations/versions/`
+- 使用异步迁移：`run_async_migrations()`
+
+## 禁止事项
+
+- ❌ 在 Router 层写数据库查询逻辑
+- ❌ 使用同步数据库驱动或同步函数操作数据库
+- ❌ 硬编码配置值（必须通过 `app/config.py` 的 `Settings` 读取）
+- ❌ 在代码中捏造不存在的模块、函数或配置项
+- ❌ 引入项目 `pyproject.toml` 中未声明的第三方包
+- ❌ 使用 `Optional[X]` 语法（统一用 `X | None`）
+- ❌ 在 Model 中编写业务逻辑方法

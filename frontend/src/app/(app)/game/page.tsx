@@ -4,10 +4,22 @@ import { useEffect, useState, useCallback } from "react";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PixelRestaurant } from "@/components/pixel/PixelRestaurant";
 import { assetApi, foodApi } from "@/lib/api";
 import type { AssetCurrentOut, FoodItem } from "@/types";
-import { Gamepad2, TrendingUp, TrendingDown, Sparkles } from "lucide-react";
+import { Gamepad2, TrendingUp, TrendingDown, Sparkles, Wallet, Trophy } from "lucide-react";
+import { motion } from "framer-motion";
+
+const container = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.06 } },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
+};
 
 export default function GamePage() {
   const [asset, setAsset] = useState<AssetCurrentOut | null>(null);
@@ -34,96 +46,121 @@ export default function GamePage() {
 
   const isUp = (asset?.change_24h ?? 0) >= 0;
 
+  if (loading) {
+    return (
+      <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-5">
+        <Skeleton className="h-7 w-32 rounded-full" />
+        <div className="grid grid-cols-3 gap-3">
+          <Skeleton className="h-24 rounded-2xl" />
+          <Skeleton className="h-24 rounded-2xl" />
+          <Skeleton className="h-24 rounded-2xl" />
+        </div>
+        <Skeleton className="h-80 rounded-2xl" />
+        <Skeleton className="h-40 rounded-2xl" />
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-5">
-      <div>
+    <motion.div
+      className="p-4 md:p-6 max-w-2xl mx-auto space-y-5"
+      variants={container}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.div variants={item}>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Gamepad2 className="h-6 w-6 text-purple-500" />
+          <Gamepad2 className="h-5 w-5 text-chart-5" />
           虚拟餐厅
         </h1>
-        <p className="text-muted-foreground text-sm mt-0.5">
+        <p className="text-muted-foreground text-sm mt-1">
           你记录的食物会出现在这里，餐厅随资产成长而升级
         </p>
-      </div>
+      </motion.div>
 
-      {loading ? (
-        <div className="text-center py-12 text-muted-foreground animate-pulse">加载餐厅中…</div>
-      ) : (
-        <>
-          {/* Asset summary */}
-          <div className="grid grid-cols-3 gap-3">
-            <Card>
-              <CardContent className="p-3 text-center">
-                <p className="text-xs text-muted-foreground">当前净值</p>
-                <p className="font-bold text-lg mt-1">
-                  ₣ {(asset?.current_value ?? 1000).toFixed(0)}
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-3 text-center">
-                <p className="text-xs text-muted-foreground">最近变动</p>
-                <p className={`font-bold text-lg mt-1 flex items-center justify-center gap-1 ${isUp ? "text-emerald-600" : "text-red-500"}`}>
-                  {isUp ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                  {isUp ? "+" : ""}{(asset?.change_24h_pct ?? 0).toFixed(1)}%
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-3 text-center">
-                <p className="text-xs text-muted-foreground">历史最高</p>
-                <p className="font-bold text-lg mt-1 text-amber-500">
-                  ₣ {(asset?.all_time_high ?? 1000).toFixed(0)}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main restaurant */}
-          <Card>
-            <CardContent className="p-4">
-              <PixelRestaurant
-                foodItems={recentItems}
-                assetValue={asset?.current_value ?? 1000}
-              />
-            </CardContent>
-          </Card>
-
-          {/* How it works */}
-          <Card className="bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2 text-purple-700 dark:text-purple-300">
-                <Sparkles className="h-4 w-4" />
-                餐厅成长规则
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-xs text-purple-800 dark:text-purple-200 space-y-1.5">
-              <div className="flex items-start gap-2">
-                <Badge variant="outline" className="text-xs shrink-0">体重下降</Badge>
-                <span>每减 0.1 kg → 资产 +0.5%，餐厅客流增加</span>
+      {/* Asset summary */}
+      <div className="grid grid-cols-3 gap-3">
+        <motion.div variants={item}>
+          <Card className="border-0 shadow-md shadow-black/5">
+            <CardContent className="p-4 text-center">
+              <div className="mx-auto w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
+                <Wallet className="h-4 w-4 text-primary" />
               </div>
-              <div className="flex items-start gap-2">
-                <Badge variant="outline" className="text-xs shrink-0">记录饮食</Badge>
-                <span>每次记录 → 资产 +0.1%，食物加入菜单</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Badge variant="outline" className="text-xs shrink-0">热量达标</Badge>
-                <span>热量在目标范围内 → 额外 +0.2%</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Badge variant="outline" className="text-xs shrink-0">连续打卡</Badge>
-                <span>3 天 +1%，7 天 +3% 额外奖励</span>
-              </div>
-              <p className="pt-1 text-purple-600 dark:text-purple-400">
-                资产 ≥ ₣1200 → 小有名气 &nbsp;
-                ≥ ₣2000 → 街坊口碑店 &nbsp;
-                ≥ ₣3000 → 人气名店 &nbsp;
-                ≥ ₣5000 → 米其林星级 ⭐
+              <p className="text-[10px] text-muted-foreground font-medium">当前净值</p>
+              <p className="text-base font-bold text-primary mt-0.5">
+                ₣{(asset?.current_value ?? 1000).toFixed(0)}
               </p>
             </CardContent>
           </Card>
-        </>
-      )}
-    </div>
+        </motion.div>
+        <motion.div variants={item}>
+          <Card className="border-0 shadow-md shadow-black/5">
+            <CardContent className="p-4 text-center">
+              <div className={`mx-auto w-9 h-9 rounded-xl flex items-center justify-center mb-2 ${isUp ? "bg-primary/10" : "bg-destructive/10"}`}>
+                {isUp ? <TrendingUp className="h-4 w-4 text-primary" /> : <TrendingDown className="h-4 w-4 text-destructive" />}
+              </div>
+              <p className="text-[10px] text-muted-foreground font-medium">最近变动</p>
+              <p className={`text-base font-bold mt-0.5 ${isUp ? "text-primary" : "text-destructive"}`}>
+                {isUp ? "+" : ""}{(asset?.change_24h_pct ?? 0).toFixed(1)}%
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+        <motion.div variants={item}>
+          <Card className="border-0 shadow-md shadow-black/5">
+            <CardContent className="p-4 text-center">
+              <div className="mx-auto w-9 h-9 rounded-xl bg-chart-4/10 flex items-center justify-center mb-2">
+                <Trophy className="h-4 w-4 text-chart-4" />
+              </div>
+              <p className="text-[10px] text-muted-foreground font-medium">历史最高</p>
+              <p className="text-base font-bold mt-0.5 text-chart-4">
+                ₣{(asset?.all_time_high ?? 1000).toFixed(0)}
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+
+      {/* Pixel restaurant — dark container for pixel art */}
+      <motion.div variants={item} className="rounded-2xl overflow-hidden bg-[#1a1a2e] p-1">
+        <PixelRestaurant
+          foodItems={recentItems}
+          assetValue={asset?.current_value ?? 1000}
+        />
+      </motion.div>
+
+      {/* How it works */}
+      <motion.div variants={item}>
+        <Card className="border-0 shadow-md shadow-black/5 bg-gradient-to-br from-chart-5/5 to-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2 font-semibold text-chart-5">
+              <Sparkles className="h-4 w-4" />
+              餐厅成长规则
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-xs text-muted-foreground space-y-2.5">
+            <div className="flex items-start gap-2">
+              <Badge variant="outline" className="text-[10px] shrink-0 rounded-full">体重下降</Badge>
+              <span>每减 0.1 kg → 资产 +0.5%，餐厅客流增加</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <Badge variant="outline" className="text-[10px] shrink-0 rounded-full">记录饮食</Badge>
+              <span>每次记录 → 资产 +0.1%，食物加入菜单</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <Badge variant="outline" className="text-[10px] shrink-0 rounded-full">热量达标</Badge>
+              <span>热量在目标范围内 → 额外 +0.2%</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <Badge variant="outline" className="text-[10px] shrink-0 rounded-full">连续打卡</Badge>
+              <span>3 天 +1%，7 天 +3% 额外奖励</span>
+            </div>
+            <p className="pt-1 text-chart-5/70 leading-relaxed">
+              资产 ≥ ₣1200 → 小有名气 · ≥ ₣2000 → 街坊口碑店 · ≥ ₣3000 → 人气名店 · ≥ ₣5000 → 米其林星级
+            </p>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 }

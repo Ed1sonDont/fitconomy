@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, date
-from sqlalchemy import String, Float, Date, DateTime, ForeignKey, UniqueConstraint, func
+from sqlalchemy import String, Float, Date, DateTime, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
@@ -8,9 +8,7 @@ from app.database import Base
 
 class WeightRecord(Base):
     __tablename__ = "weight_records"
-    __table_args__ = (
-        UniqueConstraint("user_id", "recorded_date", name="uq_user_weight_date"),
-    )
+    __table_args__: tuple = ()
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
