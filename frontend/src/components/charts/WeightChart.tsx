@@ -30,11 +30,13 @@ const CustomTooltip = ({ active, payload, label }: {
 }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="border border-border bg-card rounded-xl p-3 shadow-lg text-sm">
-      <p className="text-muted-foreground mb-1 text-xs">
+    <div className="pixel-border p-2 shadow-lg text-xs" style={{ backgroundColor: "var(--cozy-bg-panel)" }}>
+      <p className="pixel-body text-[10px]" style={{ color: "var(--cozy-muted)" }}>
         {label ? format(parseISO(label), "M月d日 (E)", { locale: zhCN }) : ""}
       </p>
-      <p className="font-bold text-lg text-chart-5">{payload[0].value} kg</p>
+      <p className="pixel-body text-sm font-bold mt-0.5" style={{ color: "var(--cozy-border)" }}>
+        {payload[0].value} kg
+      </p>
     </div>
   );
 };
@@ -42,7 +44,7 @@ const CustomTooltip = ({ active, payload, label }: {
 export function WeightChart({ data, goalWeight }: WeightChartProps) {
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
+      <div className="flex items-center justify-center h-36 text-xs pixel-body" style={{ color: "var(--cozy-muted)" }}>
         暂无体重数据
       </div>
     );
@@ -53,14 +55,14 @@ export function WeightChart({ data, goalWeight }: WeightChartProps) {
   const maxVal = Math.max(...values);
 
   return (
-    <ResponsiveContainer width="100%" height={180}>
-      <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.90 0.005 260)" />
+    <ResponsiveContainer width="100%" height={140}>
+      <LineChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--cozy-bg-deep)" />
         <XAxis
           dataKey="date"
           tickLine={false}
           axisLine={false}
-          tick={{ fontSize: 11, fill: "oklch(0.50 0.02 260)" }}
+          tick={{ fontSize: 9, fill: "var(--cozy-muted)", fontFamily: "Silkscreen, monospace" }}
           tickFormatter={(v) => {
             try { return format(parseISO(v), "M/d"); } catch { return v; }
           }}
@@ -69,27 +71,27 @@ export function WeightChart({ data, goalWeight }: WeightChartProps) {
         <YAxis
           tickLine={false}
           axisLine={false}
-          tick={{ fontSize: 11, fill: "oklch(0.50 0.02 260)" }}
+          tick={{ fontSize: 9, fill: "var(--cozy-muted)", fontFamily: "Silkscreen, monospace" }}
           domain={[Math.floor(minVal - 1), Math.ceil(maxVal + 1)]}
-          width={50}
+          width={45}
           tickFormatter={(v) => `${v}kg`}
         />
         <Tooltip content={<CustomTooltip />} />
         {goalWeight && (
           <ReferenceLine
             y={goalWeight}
-            stroke="oklch(0.65 0.17 160)"
+            stroke="#7cb083"
             strokeDasharray="5 5"
-            label={{ value: `目标 ${goalWeight}kg`, fill: "oklch(0.65 0.17 160)", fontSize: 11 }}
+            label={{ value: `目标 ${goalWeight}kg`, fill: "#7cb083", fontSize: 9 }}
           />
         )}
         <Line
           type="monotone"
           dataKey="weight_kg"
-          stroke="oklch(0.60 0.16 300)"
-          strokeWidth={2.5}
-          dot={{ r: 3, fill: "oklch(0.60 0.16 300)", strokeWidth: 0 }}
-          activeDot={{ r: 5, strokeWidth: 2, stroke: "white" }}
+          stroke="#b8956e"
+          strokeWidth={2}
+          dot={{ r: 2, fill: "#b8956e", strokeWidth: 0 }}
+          activeDot={{ r: 4, strokeWidth: 1, stroke: "#b8956e", fill: "#b8956e" }}
         />
       </LineChart>
     </ResponsiveContainer>

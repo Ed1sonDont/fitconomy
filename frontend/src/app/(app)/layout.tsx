@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store";
-import { AppNav } from "@/components/AppNav";
+import { GameHUD } from "@/components/GameHUD";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -18,11 +18,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AppNav />
-      <main className="flex-1 overflow-auto pb-20 md:pb-0">
-        {children}
-      </main>
+    <div
+      className="min-h-screen text-[var(--cozy-foreground)]"
+      style={{
+        background: "var(--cozy-bg-deep)",
+        backgroundImage: "linear-gradient(180deg, rgba(52, 70, 90, 0.15) 0%, transparent 25%, transparent 100%)",
+      }}
+    >
+      <GameHUD />
+      <main className="pt-12 pb-4">{children}</main>
     </div>
   );
 }
